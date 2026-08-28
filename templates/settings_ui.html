@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Settings - Vehicle Speed Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+    <h1>Current Configuration</h1>
+    <p>
+        Ye values <code>config/settings.py</code> se aa rahi hain. Inhe badalne
+        ke liye file edit karke server restart karna hoga (abhi ye page sirf
+        read-only viewer hai).
+    </p>
+
+    <table>
+        <tr>
+            <th>Setting</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Video Source</td>
+            <td>{{ settings.VIDEO_SOURCE }}</td>
+        </tr>
+        <tr>
+            <td>Model Path</td>
+            <td>{{ settings.MODEL_PATH }}</td>
+        </tr>
+        <tr>
+            <td>Confidence Threshold</td>
+            <td>{{ settings.CONFIDENCE_THRESHOLD }}</td>
+        </tr>
+        <tr>
+            <td>IOU Threshold</td>
+            <td>{{ settings.IOU_THRESHOLD }}</td>
+        </tr>
+        <tr>
+            <td>Speed Limit (km/h)</td>
+            <td>{{ settings.SPEED_LIMIT }}</td>
+        </tr>
+        <tr>
+            <td>Target Road Width (m)</td>
+            <td>{{ settings.TARGET_WIDTH }}</td>
+        </tr>
+        <tr>
+            <td>Target Road Length (m)</td>
+            <td>{{ settings.TARGET_HEIGHT }}</td>
+        </tr>
+        <tr>
+            <td>Counting Line</td>
+            <td>{{ settings.LINE_START }} → {{ settings.LINE_END }}</td>
+        </tr>
+    </table>
+
+    <p><a href="/">← Back to Dashboard</a></p>
+</body>
+</html>

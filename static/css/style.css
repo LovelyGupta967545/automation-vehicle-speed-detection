@@ -1,0 +1,99 @@
+:root {
+  --bg: #0a1830;
+  --card: #10254a;
+  --line: #1e3a66;
+  --blue: #4fc3f7;
+  --green: #4cd9a8;
+  --red: #ef5350;
+  --gold: #f2b84b;
+  --text: #ffffff;
+  --muted: #c9d9f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Calibri, sans-serif;
+}
+
+h1 {
+  text-align: center;
+  padding: 20px 16px 8px;
+}
+
+nav {
+  text-align: center;
+  padding: 10px;
+  background: #07101f;
+  border-bottom: 1px solid var(--line);
+}
+
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 12px;
+}
+
+nav a:hover {
+  color: var(--blue);
+}
+
+img {
+  display: block;
+  max-width: 90%;
+  margin: 20px auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+div {
+  text-align: center;
+  font-size: 1.3rem;
+}
+
+#in-count {
+  color: var(--green);
+  font-weight: bold;
+}
+
+#out-count {
+  color: var(--gold);
+  font-weight: bold;
+}
+
+table {
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background: var(--card);
+}
+
+th, td {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+th {
+  color: var(--blue);
+}
+
+p {
+  text-align: center;
+}
+
+p a {
+  color: var(--blue);
+}
+
+code {
+  background: var(--card);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle Speed Detection Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+    <h1>Smart Vehicle Counting & Speed Detection</h1>
+
+    <nav>
+        <a href="/">Dashboard</a> |
+        <a href="/about">About</a> |
+        <a href="/analytics">Analytics</a> |
+        <a href="/reports">Reports</a> |
+        <a href="/settings-ui">Settings</a>
+    </nav>
+
+    <img src="{{ url_for('video_feed') }}" alt="Live feed" />
+    <div>
+        <p>IN: <span id="in-count">0</span></p>
+        <p>OUT: <span id="out-count">0</span></p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

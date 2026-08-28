@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Analytics - Vehicle Speed Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+    <h1>Session Analytics</h1>
+    <p>Live snapshot of counters — refresh the page to update.</p>
+
+    <table>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Vehicles In</td>
+            <td>{{ stats.in_count }}</td>
+        </tr>
+        <tr>
+            <td>Vehicles Out</td>
+            <td>{{ stats.out_count }}</td>
+        </tr>
+        <tr>
+            <td>Total Counted</td>
+            <td>{{ stats.in_count + stats.out_count }}</td>
+        </tr>
+    </table>
+
+    <h2>Vehicle Type Breakdown</h2>
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>Count</th>
+        </tr>
+        {% for type, count in stats.vehicle_type_counts.items() %}
+        <tr>
+            <td>{{ type }}</td>
+            <td>{{ count }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="2">Koi vehicle abhi tak count nahi hua</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <p><a href="/">← Back to Dashboard</a></p>
+</body>
+</html>

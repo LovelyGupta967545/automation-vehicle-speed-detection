@@ -1,1 +1,4 @@
 modules/*.pt
+sample_data/*.mp4
+__pycache__/
+*.pyc

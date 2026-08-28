@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>About - Vehicle Speed Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+    <h1>Smart Automated Vehicle Counting & Speed Detection System</h1>
+
+    <p>
+        Ye ek AI-powered traffic analytics system hai jo YOLOv8 (object detection),
+        ByteTrack (multi-object tracking), aur Flask (web streaming) ka use karke
+        real-time mein vehicles ko detect, classify (car/bus/truck/motorcycle),
+        count, aur unki speed calculate karta hai — bina kisi naye hardware
+        sensor ke, seedha existing CCTV footage se.
+    </p>
+
+    <h2>How It Works — 3 Stages</h2>
+    <ol>
+        <li><strong>Detection</strong> — YOLOv8 har frame mein vehicles ko bounding box ke saath detect karta hai.</li>
+        <li><strong>Tracking & Speed</strong> — ByteTrack har vehicle ko Unique ID deta hai; perspective calibration (pixel-to-meter conversion) se speed (km/h) nikaali jaati hai, aur counting line se IN/OUT track hota hai.</li>
+        <li><strong>Web Output</strong> — Poora data ek live Flask dashboard par stream hota hai — video feed, counters, aur over-speed alerts ke saath.</li>
+    </ol>
+
+    <h2>Project Structure & File Roles</h2>
+
+    <h3>config/settings.py</h3>
+    <p>
+        Poore project ki central configuration file. Isme ye sab define hai:
+        <code>VIDEO_SOURCE</code> (input video path), <code>MODEL_PATH</code>
+        (YOLOv8 weights), <code>CONFIDENCE_THRESHOLD</code> aur
+        <code>IOU_THRESHOLD</code> (detection filtering), <code>VEHICLE_CLASS_IDS</code>
+        (COCO dataset ke IDs — car/motorcycle/bus/truck), <code>SOURCE</code> aur
+        <code>TARGET</code> (perspective calibration ke liye pixel-to-meter mapping
+        points), <code>LINE_START</code>/<code>LINE_END</code> (counting line ke
+        coordinates), aur <code>SPEED_LIMIT_KMH</code> (over-speed alert threshold).
+        Baaki saari files yahi se apni values leti hain — isliye ek hi jagah change
+        karke poora system tune kiya ja sakta hai.
+    </p>
+
+    <h3>src/detector.py — Stage 1: Detection</h3>
+    <p>
+        <strong>Detector</strong> class YOLOv8 model ko wrap karti hai.
+        <code>__init__</code> mein model ek hi baar load hota hai (taaki har frame
+        par dobara load na karna pade — jo bahut slow hota). <code>detect(frame)</code>
+        method har frame par YOLOv8 chalata hai (confidence/IOU/classes filter ke
+        saath), aur result ko <code>supervision</code> library ke clean
+        <code>Detections</code> format mein convert karke return karta hai — taaki
+        aage tracking mein use karna aasan ho.
+    </p>
+
+    <h3>src/speed_estimator.py — Stage 2 (Math half)</h3>
+    <p>
+        Do classes hain: <strong>ViewTransformer</strong> — OpenCV ke
+        <code>getPerspectiveTransform</code>/<code>perspectiveTransform</code> se
+        pixel coordinates ko real-world meters mein convert karta hai (SOURCE aur
+        TARGET points ke beech ek homography matrix banake). <strong>SpeedEstimator</strong>
+        — har vehicle (uski Unique ID se) ka position-history (time + real-world
+        coordinates) store karta hai; jab kaafi samples ho jaate hain, purani aur
+        nayi position ke beech ka Euclidean distance nikaal ke, time se divide karke,
+        aur ×3.6 karke speed (km/h) calculate karta hai.
+    </p>
+
+    <h3>src/tracker.py — Stage 2 (Tracking half) — System ka Core</h3>
+    <p>
+        <strong>VehicleAnalyzer</strong> class — ye poore pipeline ko jodti hai.
+        Iske andar <code>Detector</code>, ByteTrack (<code>sv.ByteTrack()</code>),
+        aur <code>SpeedEstimator</code> teeno ek saath kaam karte hain.
+        <code>process_frame(frame, video_time)</code> method: (1) frame par detection
+        chalata hai, (2) ByteTrack se har detection ko Unique ID deta hai
+        (<code>update_with_detections</code>), (3) har vehicle ka speed nikaalta hai
+        (<code>SpeedEstimator.update</code>), (4) custom labels banata hai
+        (<code>#ID vehicle_type XX.Xkm/h</code>), (5) <code>LineZone</code> se
+        IN/OUT counting karta hai jab vehicle counting-line cross kare, aur
+        (6) frame par boxes/labels/line draw karke annotated frame + stats
+        (in_count, out_count) return karta hai.
+    </p>
+
+    <h3>src/utils.py</h3>
+    <p>
+        Do chhote helper functions: <code>encode_jpeg(frame)</code> — OpenCV ke
+        <code>cv2.imencode()</code> se frame ko JPEG bytes mein convert karta hai
+        (MJPEG streaming ke liye zaroori). <code>class_name(class_id)</code> —
+        numeric class ID (jaise 2) ko readable naam ("car") mein convert karta hai,
+        <code>config.py</code> ke <code>CLASS_NAME_MAP</code> se lookup karke.
+    </p>
+
+    <h3>src/__init__.py</h3>
+    <p>
+        <code>src</code> folder ko ek Python package banata hai, aur shortcut imports
+        provide karta hai — taaki <code>app.py</code> mein
+        <code>from src import VehicleAnalyzer, encode_jpeg</code> jaisa simple import
+        likha ja sake, lambe paths ki jagah.
+    </p>
+
+    <h3>app.py — Stage 3: Web Output (Entry Point)</h3>
+    <p>
+        Poore system ka Flask backend, jisse app run hota hai
+        (<code>python app.py</code>). <code>generate_frames()</code> — ek generator
+        function jo video ko OpenCV se frame-by-frame padhta hai, har frame ko
+        <code>VehicleAnalyzer.process_frame()</code> se process karwata hai, aur
+        result ko JPEG mein encode karke MJPEG stream ke through continuously
+        <code>yield</code> karta hai. Routes: <code>/</code> (dashboard HTML),
+        <code>/video_feed</code> (live MJPEG stream), <code>/stats</code> (JSON
+        mein latest IN/OUT counts, JavaScript isko har second poochta hai),
+        <code>/about</code> (ye page). Ek <code>threading.Lock</code> use hota hai
+        taaki video-processing thread aur web-request thread ek saath safely
+        <code>latest_stats</code> ko access kar sakein.
+    </p>
+
+    <h3>templates/ &amp; static/</h3>
+    <p>
+        <strong>templates/index.html</strong> — Live dashboard: <code>&lt;img&gt;</code>
+        tag se video stream dikhata hai (<code>/video_feed</code> ko point karke),
+        aur ek JavaScript function (<code>refreshStats()</code>) har 1 second mein
+        <code>/stats</code> se latest counts leke IN/OUT numbers update karta hai —
+        bina page reload kiye. <strong>static/css/style.css</strong> aur
+        <strong>static/js/</strong> — dashboard ki styling aur baaki interactive
+        behavior.
+    </p>
+
+    <h2>Tech Stack</h2>
+    <ul>
+        <li>Python 3.14</li>
+        <li>YOLOv8 (Ultralytics) — Object Detection</li>
+        <li>ByteTrack / Supervision — Multi-Object Tracking</li>
+        <li>OpenCV — Video/Frame Processing</li>
+        <li>Flask — Web Backend & MJPEG Streaming</li>
+        <li>HTML / CSS / JavaScript — Dashboard Frontend</li>
+    </ul>
+
+    <h2>Key Highlights</h2>
+    <ul>
+        <li>Zero extra hardware cost — existing CCTV se hi kaam karta hai</li>
+        <li>Real-time processing (30+ FPS)</li>
+        <li>Automated vehicle classification, counting, aur speed detection</li>
+        <li>Live web-accessible dashboard</li>
+    </ul>
+
+    <h2>Known Limitations</h2>
+    <ul>
+        <li>Speed accuracy camera-specific calibration (SOURCE/TARGET) par depend karti hai</li>
+        <li>Dense traffic mein occlusion se tracking mein dikkat aa sakti hai</li>
+        <li>Real-time performance ke liye GPU (CUDA) recommended hai</li>
+    </ul>
+
+    <p><a href="/">← Back to Dashboard</a></p>
+</body>
+</html>
